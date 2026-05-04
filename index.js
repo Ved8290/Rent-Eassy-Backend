@@ -41,7 +41,5 @@ app.use('/api', Property);
 app.use('/api', require('./Routes/NewRenter'));
 app.use('/api', require('./Routes/RenterDetails'));
 app.use('/api', require('./Routes/CornUpdates')); 
-
-<<<<<<< HEAD
-=======
->>>>>>> 
+app.use('/api', require('./Routes/RentData'));
+app.use('/api/cron', require('./Routes/cronRoutes'));

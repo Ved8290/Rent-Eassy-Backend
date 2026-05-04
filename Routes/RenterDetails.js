@@ -1,3 +1,4 @@
+const RentData = require('../Modules/RentData');
 const Renter = require('../Modules/Renter');
 const Router = require('express').Router();
 
@@ -53,23 +54,32 @@ Router.get('/renters/:Rid', async (req, res) => {
     }
 });
 
-Router.delete('/renter/delete/:Rid',async(req,res)=>{
-    const {Rid}= req.params;
-    try{
-        const result= await Renter.findByIdAndDelete(Rid);
-        if(!result){
+
+Router.delete('/renter/delete/:Rid', async (req, res) => {
+    const { Rid } = req.params;
+
+    try {
+        const renter = await Renter.findByIdAndDelete(Rid);
+
+        if (!renter) {
             return res.status(404).json({
                 success: false,
                 message: 'Renter not found'
             });
         }
+
+        const rentDataResult = await RentData.deleteMany({ Rid });
+
+        console.log(`Deleted ${rentDataResult.deletedCount} rent records`);
+
         res.status(200).json({
             success: true,
-            message: 'Renter deleted successfully'
+            message: 'Renter and related rent data deleted successfully',
+            deletedRentRecords: rentDataResult.deletedCount
         });
 
-    }catch(error){
-        console.log(error);
+    } catch (error) {
+        console.error(error);
         res.status(500).json({
             success: false,
             message: 'Server error'
@@ -77,13 +87,13 @@ Router.delete('/renter/delete/:Rid',async(req,res)=>{
     }
 });
 
-Router.patch('/renter/markPaid/:id', async (req, res) => {
-    const { id } = req.params;
+Router.patch('/renter/mark/:statusU/:id', async (req, res) => {
+    const { id ,statusU } = req.params;
 
     try {
         const response = await Renter.findByIdAndUpdate(
             id,
-            { status: "paid" },
+            { status: statusU },
             { new: true }
         );
 
@@ -133,5 +143,6 @@ Router.get('/renters/search/:id', async (req, res) => {
         });
     }
 });
+
 
 module.exports = Router;

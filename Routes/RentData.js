@@ -2,47 +2,127 @@ const Renter = require('../Modules/Renter');
 const Router = require('express').Router();
 const RentData = require('../Modules/RentData');
 
+const markPaid = async (id) => {
+  try {
+    console.log("Marking renter as paid for ID:", id);
+    await Renter.findOneAndUpdate(
+      { _id: id },  
+      { status: "paid", daysLate: 0 },
+      { new: true }
+    );
+  } catch (error) {
+    console.error("Error updating renter status:", error);
+  }
+};
 
-Router.post('/renter/:id/pay', async (req, res) => {
+const updatePayment = async (id, status) => {
+  try {
+    const result = await Renter.findOneAndUpdate(
+      { Rid: id },
+      { status: status },
+      { new: true }
+    );
+
+    console.log("Update Result:", result); // 👈 ADD THIS
+
+  } catch (error) {
+    console.error("Error updating renter status:", error);
+  }
+};
+
+Router.post('/renter/:id/:status', async (req, res) => {
+  const { id, status } = req.params;
+
+  try {
+    const updated = await Renter.findOneAndUpdate(
+      { _id: id },
+      { status: status },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        message: "Renter not found"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Renter marked as ${status}`,
+      data: updated
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
+Router.post('/renter/:id/pay/:ownerID', async (req, res) => {
+  try {
+    const { id, ownerID } = req.params;
+    const { rent, date, month } = req.body;
+
+    // ✅ Save payment
+    const newPayment = new RentData({
+      Rid: id,
+      ownerID: ownerID,
+      rent,
+      date,
+      month
+    });
+
+    await newPayment.save();
+
+    // ✅ Update renter status
+    await markPaid(id);
+
+    res.status(201).json({
+      message: "Payment saved successfully",
+      data: newPayment
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+Router.get('/renters/rentData/:id', async (req, res) => {
     const { id } = req.params;
-    const { rent, date, ownerID } = req.body;
 
     try {
-        const newEntry = await RentData.create({
-            Rid: id,
-            rent,
-            date,
-            ownerID,
-            status: 'paid'
-        });
+        const renterData = await RentData.find({Rid:id});
 
-        const updatedRenter = await Renter.findByIdAndUpdate(
-            id,
-            { status: 'paid' },
-            { new: true }
-        );
-
-        if (!updatedRenter) {
+        if (!renterData) {
             return res.status(404).json({
                 success: false,
-                message: 'Renter not found'
+                message: 'No rent data found for this renter'
             });
         }
-
-        return res.status(201).json({
+        if (renterData.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'No rent data found for this renter'
+            });
+        }
+        res.status(200).json({
             success: true,
-            message: 'Payment recorded successfully',
-            rentData: newEntry,
-            renter: updatedRenter
+            data: renterData
         });
-
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({
             success: false,
-            message: 'Internal Server Error'
+            message: 'Server error'
         });
     }
 });
+
 
 module.exports = Router;
