@@ -107,7 +107,7 @@ const sendRentEmail = async (renter, type) => {
   const template = templates[type](renter);
   try {
     await transporter.sendMail({
-      from: `"Property Management" <${process.env.GMAIL_USER}>`,
+      from: `"RentFlow" <${process.env.GMAIL_USER}>`,
       to: renter.email,
       subject: template.subject,
       html: template.html,

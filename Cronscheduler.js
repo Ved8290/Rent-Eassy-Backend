@@ -1,6 +1,6 @@
 const cron = require('node-cron');
 const Renter = require('./Modules/Renter');
-const { sendRentEmail } = require('./emailService');
+const { sendRentEmail } = require('./Emailservice');
 
 const updateRenterStatuses = async () => {
   try {
