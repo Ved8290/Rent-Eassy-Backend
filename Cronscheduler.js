@@ -100,7 +100,7 @@ const updateRenterStatuses = async () => {
 
 const startRentStatusCron = () => {
   // Runs every day at 6:00 AM 
-  cron.schedule('0 6 * * *', async () => {
+  cron.schedule('0 10 * * *', async () => {
     console.log('[CRON] Running rent status + email job...');
     await updateRenterStatuses();
   }, {
